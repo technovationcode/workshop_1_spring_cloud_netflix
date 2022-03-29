@@ -76,49 +76,74 @@ Lograr todos estos elementos que permitan orquestar toda una red de microservici
 
 Los ingenieros de Netflix desarrollaron un conjunto de soluciones para implementar cada una de esas características, para ello se basaron en la reutilización de mucho código existente, el resultado final es la solución de código abierto [Spring Cloud Netflix.](http://cloud.spring.io/spring-cloud-netflix)
 
-Las herramientas específicas que resuelve el problema son:
+Algunos componentes que revisaremos son:
 
--   **Service Discovery y Netflix Eureka**
+-   **Descubrimiento de servicios y Eureka**
 
-Es un microservicio REST (Representational State Transfer) que se utiliza con el objetivo de registrar y localizar los microservicios existentes en el ecosistema, informar de su localización, estado y alguna métrica operacional. Facilita el balanceo de la carga entre las instancias de los microservicios y la tolerancia a fallos.
+[Eureka](https://github.com/Netflix/eureka/wiki) es un servidor para el registro y localización de microservicios, balanceo de carga y tolerancia a fallos.  **La función de Eureka es registrar las diferentes instancias de microservicios existentes, su localización, estado, metadatos...**
 
-En Netflix, es un componente crítico en la distribución de la carga en capas intermedias. En resumen la función de Eureka es registrar las diferentes instancias de microservicios existentes, su localización, estado, metadatos…
+### ¿Cómo funciona?
 
--   **Load balancing y Netflix Ribbon**
+Cada microservicio, durante su arranque, se comunicará con el servidor Eureka para notificar que está disponible, dónde está situado, sus metadatos… De esta forma  **Eureka mantendrá en su registro la información de todos los microservicios del ecosistema**.
 
-Ribbon proporciona principalmente algoritmos de equilibrio de carga del lado del cliente, es una librería para la Inter Comunicación de Procesos (IPC), conocido también como llamadas a procedimientos remotos (RPC). El modelo de uso primario implica llamadas REST con soporte para varios esquemas de serialización. Ribbon proporciona las siguientes funcionalidades:
+El nuevo microservicio continuará notificando a Eureka su estado cada 30 segundos, lo que denominan ‘heartbeats’. Si después de tres periodos Eureka no recibe notificación de dicho microservicio, lo eliminará del registro. De la misma forma una vez vueltos a recibir tres notificaciones considerará el servicio disponible de nuevo.
 
--   Balanceo de carga
--   Tolerancia a fallos
--   Soporte para múltiples protocolos de forma asíncrona o reactiva (HTTP, TCP, UDP)
--   Permite cacheo y procesamiento por lotes
--   Integración con servidores de descubrimiento como Eureka o Consul
+Cada cliente de Eureka podrá también recuperar el registro para localizar otros microservicios con los que necesite comunicarse. Dicha información de registro se cachea en el cliente.
 
-Cuando Ribbon recibe una petición a un servicio externo, lo primero que hace es consultar al servidor de Eureka, como se encuentra dicho micro, y decidirá a qué instancia de las disponibles dirigir la petición entrante.
+Eureka  **se puede configurar para funcionar en modo cluster donde varias instancias “peer” intercambiarán su información**. Esto, junto al cacheo de la información de registro en los clientes da a Eureka una alta tolerancia a fallos.
 
-![netflix y microservicios](https://lh3.googleusercontent.com/aubes0y1QW7_BQFRpFVNXSxOcNsFZgvattDu95i1fV_BzzBhUp9fN4ogfkcfmFS__ntSMKS_xyP8sSX65FCouZwzL_rFDL8B19kaRKQf4qYqUoLqfjwymEJLaQPYFtZM0jxyAdgO)
+-   **Balanceo de carga y Ribbon**
 
--   **Fault tolerance y Netflix Hystrix**
 
-Hystrix es una biblioteca de latencia y tolerancia a fallos diseñada para aislar puntos de acceso a sistemas remotos, servicios y bibliotecas de terceros, detener el fallo en cascada y permitir la resiliencia en sistemas distribuidos complejos donde los errores son inevitables.
+[Ribbon](https://github.com/Netflix/ribbon/wiki)  es una librería diseñada para la comunicación entre procesos en la nube que realiza balanceo de carga en el lado cliente. Cada uno de los balanceadores es parte de un conjunto de componentes que trabajan juntos para comunicarse con un servidor remoto bajo demanda.
 
-Por lo general, para los sistemas desarrollados con arquitectura de microservicios, hay muchos microservicios involucrados. Estos microservicios colaboran entre sí.
+Uno de los puntos clave de Ribbon es la posibilidad de integrarse con Eureka para el descubrimiento de las diferentes instancias de las que dispone un microservicio.
 
-![netflix y microservicios](https://lh5.googleusercontent.com/vsMeSIBc9EmPkIGaNBQyHeXWApixyQdFw4NrnzSNnhmH28k45sK5c4Fvj1eJswgUCtC8a8tZO_bQLlLmT8R8LJ3bckeAufDM6dksTfkNSsYiRKehqDV3T5HxFZ2g6txWCs4V38Ni)
+### ¿Cómo funciona?
 
--   **API Gateway Design Pattern y Netflix Zuul**
+Cuando necesitamos invocar un microservicio, en primera instancia definiremos nuestra petición a dicho microservicio identificándolo por el nombre con el que se registra en Eureka. No será necesario pues identificar una instancia concreta del microservicio, ni la máquina en la que se encuentra, su IP o puerto.
 
-Es la puerta de entrada para todas las solicitudes desde dispositivos y sitios web al backend de la aplicación de transmisión de Netflix. Como aplicación de servicio perimetral, Zuul está diseñada para permitir el enrutamiento dinámico, el monitoreo, la resistencia y la seguridad. También tiene la capacidad de enrutar solicitudes a varios grupos de Amazon Auto Scaling según corresponda.
+Ribbon utilizará el nombre de microservicio que hemos indicado y consultará el registro de Eureka para recuperar cuantas instancias hay de ese microservicio y en qué máquinas se encuentran.
 
-Zuul utiliza una gama de diferentes tipos de filtros que nos permiten aplicar la funcionalidad de forma rápida y ágil a nuestro servicio de borde. Estos filtros nos ayudan a realizar las siguientes funciones:
+Con dicha información Ribbon ejecutará el algoritmo de balanceo de carga que tenga definido (Round Robin por defecto) para determinar a qué instancia del microservicio invocar.
 
--   Autenticación y seguridad: identifica los requisitos de autenticación para cada recurso y rechaza las solicitudes que no los satisfacen.
--   Información y supervisión: seguimiento de datos y estadísticas importantes en el borde para brindarnos una visión precisa de la producción.
--   Enrutamiento dinámico: enrutamiento dinámico de solicitudes a diferentes clústeres de backend según sea necesario.
--   Stress Testing: aumentar gradualmente el tráfico a un clúster para medir el rendimiento.
--   Load Shedding: asignación de capacidad para cada tipo de solicitud y eliminación de solicitudes que superan el límite.
--   Manejo de respuestas estáticas: generar algunas respuestas directamente en el borde en lugar de reenviarlas a un clúster interno
--   Resiliencia multirregional: enrutamiento de solicitudes a través de las regiones de AWS para diversificar nuestro uso de ELB y acercar nuestra ventaja a nuestros miembros.
+Una vez decidida que instancia invocar, Ribbon encapsulará la petición dentro de un “Hystrix Command” y la realizará. La gestión de la petición será entonces realizada por Hystrix.
 
-![netflix y microservicios](https://lh3.googleusercontent.com/FZST3ltIZLImjBDN3vYoRwOpqEUzRzecq5hedOWZG36QG4-oVqMW6NlBHnrLPFIOrOqcA1pfRlu5gvCcejyZJOkglZkD9IauvkEPdPRkuPXuqCzZnlsYIwX-npffKzxZfiGr2LJC)
+-   **Tolerancia a fallos y Hystrix**
 
+
+[Hystrix](https://github.com/Netflix/Hystrix/wiki) es una librería que implemente el patrón  [CircuitBreaker](http://martinfowler.com/bliki/CircuitBreaker.html). Hystrix nos permite gestionar las interacciones entre servicios en sistemas distribuidos añadiendo lógica de latencia y tolerancia a fallos.
+
+Su finalidad es mejorar la fiabilidad global del sistema, para ello Hystrix aísla los puntos de acceso de los microservicios, impidiendo así los fallos en cascada a través de los diferentes componentes de la aplicación, proporcionando alternativas de “fallback”, gestionando timeouts, pools de hilos…
+
+### ¿Cómo funciona?
+
+Hystrix encapsula las peticiones a sistemas “externos” para gestionar diversos aspectos de éstas tales como: timeouts, estadísticas de éxito y fallo, semáforos, lógica de gestión de error, propagación de errores en cascada...
+
+Así por ejemplo si una petición a un servicio alcanza un cierto límite (20 fallos en 5 segundos por defecto), Hystrix abrirá el circuito de forma que no se realizarán más peticiones a dicho servicio, lo que impedirá la propagación de los errores en cascada.
+
+-   **Patrón de diseño de API Gateway y Zuul**
+
+[Zuul](https://github.com/Netflix/zuul/wiki)  es un “edge service” que  **permite enrutado dinámico, balanceo de carga, monitorización y securización de peticiones**. A efectos prácticos Zuul es un servidor compuesto por filtros, cada uno de los cuales está enfocado a una funcionalidad como pueden ser las anteriormente mencionadas.
+
+### ¿Cómo funciona?
+
+En una arquitectura de microservicios normalmente  **Zuul será configurado como el punto de entrada al ecosistema de microservicios y será el encargado de enrutar, balancear, securizar… las peticiones que reciban los microservicios**.
+
+Cada petición enviada a Zuul pasará por los filtros que lo componen que en función de las características de la petición pueden por ejemplo rechazarla por motivos de seguridad, registrarla con finalidades de monitorización, enrutarla a una determinada instancia de un microservicio… según los filtros configurados o los que nosotros mismos hayamos implementado.
+
+Por defecto, Zuul utiliza Ribbon para localizar a través de Eureka las instancias de microservicio a la que derivar las peticiones que ejecutará dentro de un “Hystrix Command”, integrando así todos los componentes de la arquitectura y aprovechando todas la ventajas que proporciona el ecosistema spring­cloud.
+
+**Zuul también nos permite configurar el enrutamiento a los microservicios a través de properties**, de forma que un microservicio no tendrá que ser invocado necesariamente por el nombre con el que ha sido registrado en Eureka.
+
+Sin embargo esta funcionalidad de enrutamiento no utiliza los otros elementos de la arquitectura como Ribbon o Hystrix.
+
+# Referencias
+
+ 1. [Microservicios Spring Cloud: Arquitectura (1/2) - Paradigma (paradigmadigital.com)](https://www.paradigmadigital.com/dev/quien-es-quien-en-la-arquitectura-de-microservicios-spring-cloud-12/)
+    
+  2. [Microservicios Spring Cloud: Hystrix, Ribbon y Zuul - Paradigma (paradigmadigital.com)](https://www.paradigmadigital.com/dev/quien-es-quien-en-la-arquitectura-de-microservicios-spring-cloud-22/)
+    
+  3. [Building Microservices with Spring Boot & Netflix OSS - Pentalog](https://www.pentalog.com/blog/it-development-technology/microservices-spring-boot-netflix-oss)
+    
+   4. [Microservices with Netflix OSS, Spring Boot, and non-JVM applications | by Samodha Pallewatta | Medium](https://medium.com/@skpallewatta92/microservices-with-netflix-oss-spring-boot-and-non-jvm-applications-2d762768921a)
