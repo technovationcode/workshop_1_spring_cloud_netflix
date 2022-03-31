@@ -6,5 +6,7 @@ server:
 
 eureka:
   client:
-    register-with-eureka: false
-    fetch-registry: false
+    # Server doesnot required to register it self hence set to false
+    registerWithEureka: false
+    # Server Does not required to fetch the registry it self
+    fetchRegistry: false

@@ -5,5 +5,16 @@ server:
   port: 8080
 zuul:
   routes:
-    movie-service: /movies-service/**
-    review-service: /review-service/**
+    id-movie-service: 
+      path: /movies-service/**
+      url: movie-service
+    id-review-service: 
+      path: /review-service/**
+      url: review-service
+
+eureka:
+  client:
+    registerWithEureka: true
+    fetchRegistry: true
+    serviceUrl:
+      defaultZone: http://localhost:8761/eureka/

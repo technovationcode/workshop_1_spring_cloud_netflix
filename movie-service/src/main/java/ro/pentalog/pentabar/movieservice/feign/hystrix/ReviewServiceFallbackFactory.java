@@ -3,12 +3,12 @@ package ro.pentalog.pentabar.movieservice.feign.hystrix;
 import feign.hystrix.FallbackFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.hateoas.CollectionModel;
 import org.springframework.stereotype.Component;
 import ro.pentalog.pentabar.movieservice.feign.ReviewsFeignClient;
 import ro.pentalog.pentabar.movieservice.model.MovieReview;
 
 import java.util.Collections;
+import java.util.List;
 
 /**
  * Fallback class used for feign client, in case the hystrix circuit breaks
@@ -22,9 +22,9 @@ public class ReviewServiceFallbackFactory implements FallbackFactory<ReviewsFeig
     public ReviewsFeignClient create(Throwable throwable) {
         return new ReviewsFeignClient() {
             @Override
-            public CollectionModel<MovieReview> getMovieReviews(Long movieId) {
+            public List<MovieReview> getMovieReviews(Long movieId) {
                 LOGGER.error("Error occurred trying to fetch reviews from review service", throwable);
-                return new CollectionModel<>(Collections.emptyList());
+                return Collections.emptyList();
             }
         };
     }
