@@ -13,7 +13,7 @@ Así que, explicaremos de manera rápida cómo se puede integrar Netflix Zuul (A
 ## Monolíticos vs Microservicios
 
 ### Arquitectura monolítica
-Las aplicaciones monolíticas o sistemas monolíticos, tienen todas o la mayoría de sus funcionalidades en un único proceso o contenedor y está formada por capas internas o bibliotecas. Aunque son fáciles de desarrollar, una aplicación que aglutina toda su funcionalidad no es la mejor opción, en el caso de que se tengan aspiraciones de crecimiento complejas, más usuarios, más desarrolladores…
+Las aplicaciones monolíticas o sistemas monolíticos, tienen todas o la mayoría de sus funcionalidades en un único proceso o contenedor y está formada por capas internas o bibliotecas. Aunque son fáciles de desarrollar, una aplicación que aglutina toda su funcionalidad no es la mejor opción, en el caso de que se tengan aspiraciones de crecimiento complejo, más usuarios, más desarrolladores…
 
 Además, debes tener en cuenta que un gran inconveniente que caracteriza a las aplicaciones monolíticas, es que en el momento que se quiera realizar un nuevo despliegue, se debería relanzar todo el sistema de nuevo.
 
@@ -137,6 +137,47 @@ Por defecto, Zuul utiliza Ribbon para localizar a través de Eureka las instanci
 **Zuul también nos permite configurar el enrutamiento a los microservicios a través de properties**, de forma que un microservicio no tendrá que ser invocado necesariamente por el nombre con el que ha sido registrado en Eureka.
 
 Sin embargo esta funcionalidad de enrutamiento no utiliza los otros elementos de la arquitectura como Ribbon o Hystrix.
+
+## Ejemplo de Spring Cloud Netflix
+
+Después de ver algunos conceptos básicos acerca de los microservicios y Netflix OSS, veremos como poder aplicar lo teórico a lo práctico.
+
+### Requisitos
+Para poder ejecutar y probar el ejemplo de este repositorio, necesitamos tener instalado algunas herramientas:
+
+1. **JDK 11**
+2. **El IDE de su preferencia**
+> Microsoft ofrece un paquete de codificación para Java el cual nos ayuda a configurar rápidamente, instalando VS Code, el kit de desarrollo de Java (JDK) y las extensiones esenciales de Java. [Getting Started with Java in Visual Studio Code](https://code.visualstudio.com/docs/java/java-tutorial).
+> 
+> Además, requerimos algunas extensiones adicionales para poder ejecutar y/o debuguear programas hechos con Spring Boot en nuestro VS Code [Spring Boot support in Visual Studio Code](https://code.visualstudio.com/docs/java/java-spring-boot).
+
+3. **Postman**
+
+>**Postman** Es un cliente HTTP que nos da la posibilidad de testear 'HTTP requests' a través de una interfaz gráfica de usuario, por medio de la cual obtendremos diferentes tipos de respuesta
+>[Download Postman | Get Started for Free](https://www.postman.com/downloads/)
+
+### Introducción al ejemplo
+Hay dos servicios principales: **el servicio de películas (movie-service) y dos servicios de reseñas (review-service-8083 y review-service-8086)**, que implementarán una biblioteca de películas simple y un sistema de reseñas que contiene reseñas de películas.
+
+Además de los servicios principales, también hay dos más: **servicio de descubrimiento (discovery-service) y puerta de enlace (api-gateway)**.
+
+Usaremos Spring Cloud Netflix, que integra Netflix OSS con Spring Boot, lo que permite la configuración automática para las tecnologías que se encuentran en el stack de Netflix.
+
+### Arquitectura del ejemplo
+
+La arquitecura propuesta para este ejemplo fue basada en el patrón la API Gateway.
+
+Dónde: 
+
+1. Comenzamos con el **CLIENTE**, en este caso será Postman, el cual nos ayudará a mandar peticiones HTTP a nuestros microservicios.
+2. En segundo lugar tenemos el servicio **API GATEWAY**, el cual nos permitirá centralizar y enrutar todas las peticiones desde el exterior hacia cada microservicio, actuando como un proxy o punto único que enruta una petición que llega hacia los microservicios correspondientes.
+3. En tercer lugar tenemos el **DISCOVERY SERVICE**, el cual tendrá el rol de servidor para el registro y localización de microservicios.
+4. Finalmente tenemos los microservicios principales o de dominio:
+	- **MOVIE SERVICE** el cual almacenará algunas películas de ejemplo en una base de datos embebida (**H2**). Teniendo como proposito simular la biblioteca de películas simple.
+	- **REVIEW SERVICE** en este caso, tendremos dos proyectos de review-service en diferentes carpetas (8083 y 8806). Esto para simular dos instancias de REVIEW SERVICE y poder balancear las peticiones con Ribbon, Eureka y Feign.
+Dichos proyectos tiene como proposito simular el sistema de reseñas que contiene reseñas de las películas de MOVIE SERVICE, y de igual manera, agregar dichas reseñas en una base de datos embebida (**H2**).
+	
+![Arquitectura para ejemplo](https://github.com/geezylucas/aprende-spring-cloud-netflix/blob/master/arquit-netflix.drawio.png?raw=true)
 
 # Referencias
 
