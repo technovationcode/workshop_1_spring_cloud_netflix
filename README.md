@@ -146,7 +146,7 @@ Después de ver algunos conceptos básicos acerca de los microservicios y Netfli
 Para poder ejecutar y probar el ejemplo de este repositorio, necesitamos tener instalado algunas herramientas:
 
 1. **JDK 11**
-2. **El IDE de su preferencia**
+2. **El IDE de su preferencia (Recomendamos visual studio code)** 
 > Microsoft ofrece un paquete de codificación para Java el cual nos ayuda a configurar rápidamente, instalando VS Code, el kit de desarrollo de Java (JDK) y las extensiones esenciales de Java. [Getting Started with Java in Visual Studio Code](https://code.visualstudio.com/docs/java/java-tutorial).
 > 
 > Además, requerimos algunas extensiones adicionales para poder ejecutar y/o debuguear programas hechos con Spring Boot en nuestro VS Code [Spring Boot support in Visual Studio Code](https://code.visualstudio.com/docs/java/java-spring-boot).
