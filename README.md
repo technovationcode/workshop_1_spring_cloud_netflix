@@ -138,7 +138,7 @@ Por defecto, Zuul utiliza Ribbon para localizar a través de Eureka las instanci
 
 Sin embargo esta funcionalidad de enrutamiento no utiliza los otros elementos de la arquitectura como Ribbon o Hystrix.
 
-## Ejemplo de Spring Cloud Netflix
+## Tutorial / Ejemplo de Spring Cloud Netflix
 
 Después de ver algunos conceptos básicos acerca de los microservicios y Netflix OSS, veremos como poder aplicar lo teórico a lo práctico.
 
